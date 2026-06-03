@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Symptom Predictor — MedAI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="topbar">
+    <a href="/">MedAI</a>
+    <span>Symptom → Disease Prediction</span>
+</div>
+
+<div class="container">
+    <div class="card">
+        <h2>Symptom Checker</h2>
+        <p class="subtitle">Select the symptoms you are experiencing to get an AI-powered disease prediction.</p>
+
+        <div class="status-bar">
+            <span>Selected symptoms: <strong id="selected-count">0</strong></span>
+            <button id="predict-btn" class="btn" onclick="runPrediction()">Predict Disease</button>
+        </div>
+
+        <div class="symptom-grid">
+            {% for symptom in symptoms %}
+            <div class="symptom-chip" onclick="toggleSymptom(this, '{{ symptom }}')">
+                {{ symptom.replace('_', ' ').title() }}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div id="prediction-result" class="card">
+        <!-- Result will be rendered by main.js -->
+    </div>
+</div>
+
+<div class="footer">
+    MedAI — For educational purposes only. Always consult a licensed medical professional.
+</div>
+
+<script src="{{ url_for('static', filename='main.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedAI — Unified Medical Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .hero {
+            background: linear-gradient(135deg, #185FA5 0%, #0C447C 100%);
+            color: #fff; text-align: center; padding: 80px 20px 70px;
+        }
+        .hero h2 { font-size: 36px; font-weight: 800; margin-bottom: 15px; }
+        .hero p  { font-size: 18px; opacity: 0.9; max-width: 650px; margin: 0 auto; }
+
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px; padding: 50px 0 30px;
+        }
+
+        /* Row 2 — cards 4 & 5 centred together */
+        .modules-row2 {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            padding-bottom: 50px;
+        }
+        .modules-row2 .module-card { width: calc(33.333% - 8px); }
+
+        .module-card {
+            background: #fff; border-radius: 16px; border: 1px solid #e2e8f0;
+            padding: 30px 25px; text-decoration: none; color: inherit;
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+            display: flex; flex-direction: column; height: 100%;
+            position: relative; overflow: hidden;
+        }
+        .module-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(24, 95, 165, 0.12);
+            border-color: #185FA5;
+        }
+        .module-num {
+            display: inline-block; width: 40px; height: 40px; border-radius: 12px;
+            font-size: 16px; font-weight: 800; text-align: center; line-height: 40px;
+            margin-bottom: 18px;
+        }
+        .module-card h3 { font-size: 19px; font-weight: 700; margin-bottom: 10px; color: #1a1a2e; }
+        .module-card p  { font-size: 14px; color: #64748b; line-height: 1.6; flex: 1; }
+        .module-tag {
+            display: inline-block; align-self: flex-start; margin-top: 18px;
+            padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+        }
+        .m1 .module-num, .m1 .module-tag { background: #E1F5EE; color: #0F6E56; }
+        .m2 .module-num, .m2 .module-tag { background: #EEEDFE; color: #3C3489; }
+        .m3 .module-num, .m3 .module-tag { background: #FAEEDA; color: #633806; }
+        .m4 .module-num, .m4 .module-tag { background: #FAECE7; color: #712B13; }
+        .m5 .module-num, .m5 .module-tag { background: #E6F1FB; color: #0C447C; }
+        .m5 { border: 1px solid #B5D4F4; background: linear-gradient(160deg,#fff 60%,#f0f6ff 100%); }
+        .m5:hover { border-color: #185FA5; box-shadow: 0 15px 35px rgba(24,95,165,0.15); }
+        .new-badge {
+            position: absolute; top: 14px; right: 14px;
+            background: #185FA5; color: #fff; font-size: 10px; font-weight: 700;
+            letter-spacing: 0.5px; padding: 3px 9px; border-radius: 20px;
+        }
+
+        .quick-bar {
+            background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px;
+            padding: 25px 30px; text-align: center; margin-bottom: 40px;
+        }
+        .quick-bar p { font-size: 14px; color: #64748b; margin-bottom: 12px; font-weight: 500; }
+        .quick-link {
+            display: inline-block; margin: 5px; padding: 8px 18px;
+            background: #fff; color: #185FA5; border-radius: 25px;
+            font-size: 13px; text-decoration: none; border: 1px solid #cbd5e1;
+            transition: 0.2s; font-weight: 600;
+        }
+        .quick-link:hover { background: #185FA5; color: #fff; border-color: #185FA5; }
+
+        @media (max-width: 760px) {
+            .modules-grid { grid-template-columns: 1fr; }
+            .modules-row2 { flex-direction: column; }
+            .modules-row2 .module-card { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <a href="/">MedAI</a>
+    <span>Intelligent Healthcare Hub</span>
+</div>
+
+<div class="hero">
+    <h2>Your AI Medical Assistant</h2>
+    <p>Predict diseases from symptoms, analyze reports, forecast risks, get personalized support — and now detect rare genetic diseases from DNA data.</p>
+</div>
+
+<div class="container">
+    <!-- Row 1: Modules 1, 2, 3 -->
+    <div class="modules-grid">
+        <a href="/symptom" class="module-card m1">
+            <div class="module-num">1</div>
+            <h3>Symptom Predictor</h3>
+            <p>Select your symptoms and get an AI-powered disease prediction with confidence score and severity rating.</p>
+            <span class="module-tag">ML Engine</span>
+        </a>
+
+        <a href="/report" class="module-card m2">
+            <div class="module-num">2</div>
+            <h3>Report Analyzer</h3>
+            <p>Upload your lab results. Our system extracts values, compares them with norms, and explains them in plain English.</p>
+            <span class="module-tag">OCR + NLP</span>
+        </a>
+
+        <a href="/risk" class="module-card m3">
+            <div class="module-num">3</div>
+            <h3>Future Risk Prediction</h3>
+            <p>Enter your health parameters to get risk scores for 5 major diseases with a 5-year projection chart.</p>
+            <span class="module-tag">Risk Engine</span>
+        </a>
+    </div>
+
+    <!-- Row 2: Modules 4 & 5 centred -->
+    <div class="modules-row2">
+        <a href="/support" class="module-card m4">
+            <div class="module-num">4</div>
+            <h3>Patient Support</h3>
+            <p>Ask about any condition to get medicines, precautions, diet advice, and follow-up guidance from the AI.</p>
+            <span class="module-tag">AI Chatbot</span>
+        </a>
+
+        <a href="/rare" class="module-card m5">
+            <span class="new-badge">NEW</span>
+            <div class="module-num">5</div>
+            <h3>Rare Disease Predictor</h3>
+            <p>Enter DNA variant data or VUS (Variants of Uncertain Significance) to detect rare genetic diseases from 6,000+ Orphanet records.</p>
+            <span class="module-tag">DNA + VUS Engine</span>
+        </a>
+    </div>
+
+    <div class="quick-bar">
+        <p>Common Conditions Quick Guide:</p>
+        <a class="quick-link" href="/support?q=flu">Flu</a>
+        <a class="quick-link" href="/support?q=diabetes">Diabetes</a>
+        <a class="quick-link" href="/support?q=hypertension">Hypertension</a>
+        <a class="quick-link" href="/support?q=malaria">Malaria</a>
+        <a class="quick-link" href="/support?q=thyroid">Thyroid</a>
+        <a class="quick-link" href="/support?q=anemia">Anemia</a>
+    </div>
+</div>
+
+<div class="footer">
+    MedAI — For educational purposes only. Always consult a licensed medical professional for diagnosis.
+</div>
+
+</body>
+</html>

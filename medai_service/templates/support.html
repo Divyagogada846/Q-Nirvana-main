@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Support Chat — MedAI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .chat-wrap { height: 100%; display: flex; flex-direction: column; overflow: hidden; max-height: 80vh; }
+        .disease-list { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+        .disease-tag { padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 20px; font-size: 13px; cursor: pointer; transition: 0.2s; }
+        .disease-tag:hover { background: #f0f7ff; border-color: #185FA5; color: #185FA5; }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <a href="/">MedAI</a>
+    <span>AI Patient Support Assistant</span>
+</div>
+
+<div class="container" style="max-width: 800px;">
+    <div class="card chat-wrap">
+        <h2>AI Support Chat</h2>
+        <p class="subtitle">Ask about medicines, precautions, and diet for your condition. Type below to start.</p>
+
+        <div id="disease-list-container" class="disease-list">
+            <!-- Populated by JS -->
+             {% for disease in diseases %}
+             <div class="disease-tag" onclick="sendQuickQuestion('{{ disease.label }}')">
+                {{ disease.label }}
+             </div>
+             {% endfor %}
+        </div>
+
+        <div id="chat-messages" class="chat-messages">
+            <div class="chat-msg bot">
+                <div class="chat-av bot">M+</div>
+                <div class="chat-bubble">Hello! I am MedAssist. Which disease or symptoms would you like to discuss today?</div>
+            </div>
+        </div>
+
+        <div class="chat-input-wrap">
+            <input id="chat-input" type="text" placeholder="e.g., 'What medicine for diabetes?' or 'Explain precautions for flu'" autofocus>
+            <button class="btn" onclick="sendChatMessage()">Send</button>
+        </div>
+    </div>
+</div>
+
+<div class="footer">
+    MedAI — For educational purposes only. Always consult a licensed medical professional for diagnosis and treatment.
+</div>
+
+<script src="{{ url_for('static', filename='main.js') }}"></script>
+<script>
+    // Handle URL parameters for quick access (?q=flu)
+    const urlParams = new URLSearchParams(window.location.search);
+    const q = urlParams.get('q');
+    if (q) {
+        document.getElementById('chat-input').value = `Tell me about ${q}`;
+        setTimeout(sendChatMessage, 500);
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', sans-serif; background: #f5f7fa; color: #1a1a2e; line-height: 1.5; }
+
+.topbar {
+  background: #185FA5; color: #fff;
+  padding: 14px 32px; display: flex; align-items: center; gap: 12px;
+}
+.topbar a { color: #fff; text-decoration: none; font-weight: 600; font-size: 22px; }
+.topbar span { font-size: 13px; opacity: 0.8; }
+
+.container { max-width: 1000px; margin: 30px auto; padding: 0 20px; }
+
+.card {
+  background: #fff; border-radius: 16px; border: 1px solid #e2e8f0;
+  padding: 30px; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+h2 { font-size: 24px; margin-bottom: 20px; color: #0C447C; }
+p.subtitle { color: #64748b; margin-bottom: 25px; }
+
+.btn {
+  background: #185FA5; color: #fff; border: none; padding: 12px 24px;
+  border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s;
+  font-size: 15px;
+}
+.btn:hover { background: #0C447C; transform: translateY(-1px); }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Grid for symptoms */
+.symptom-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px; margin-bottom: 30px;
+}
+.symptom-chip {
+  background: #fff; border: 1px solid #cbd5e1; padding: 10px;
+  border-radius: 10px; cursor: pointer; text-align: center; font-size: 13px;
+  transition: 0.2s;
+}
+.symptom-chip:hover { border-color: #185FA5; background: #f0f7ff; }
+.symptom-chip.selected { background: #185FA5; color: #fff; border-color: #185FA5; }
+
+.status-bar {
+  background: #f8fafc; padding: 15px 20px; border-radius: 12px;
+  margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center;
+}
+
+#prediction-result, #report-result, #risk-result {
+  margin-top: 30px; display: none;
+}
+
+.error-box { background: #FCEBEB; color: #A32D2D; padding: 15px; border-radius: 8px; border: 1px solid #fecaca; }
+
+/* Prediction specific classes used in main.js */
+.pred-card { border: 1px solid #e2e8f0; padding: 12px; border-radius: 10px; margin-bottom: 10px; }
+.pred-card.top { border-color: #185FA5; background: #f0f7ff; }
+.pred-name { font-weight: 600; margin-bottom: 6px; }
+.conf-bar-wrap { background: #e2e8f0; height: 6px; border-radius: 3px; overflow: hidden; }
+.conf-bar { height: 100%; border-radius: 3px; }
+.conf-label { font-size: 11px; color: #64748b; margin-top: 4px; }
+
+.badge { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+.pill { padding: 6px 14px; background: #f1f5f9; border-radius: 20px; font-size: 12px; margin: 4px; display: inline-block; }
+.pill.blue { background: #E6F1FB; color: #0C447C; }
+.pill-row { margin: 10px 0; }
+.section-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; margin-bottom: 8px; }
+.prec-list { padding-left: 20px; margin-top: 10px; }
+.prec-list li { margin-bottom: 6px; font-size: 14px; }
+
+.cross-module-link {
+  margin-top: 25px; padding: 20px; background: #fffbeb; border: 1px solid #fef3c7;
+  border-radius: 12px; display: flex; justify-content: space-between; align-items: center;
+}
+.cross-module-link span { font-size: 14px; color: #92400e; font-weight: 500; }
+.link-btn { color: #185FA5; font-weight: 700; text-decoration: none; font-size: 14px; }
+
+/* Report Analyzer */
+.metric-card { flex: 1; padding: 15px; text-align: center; border-radius: 12px; background: #fff; border: 1px solid #e2e8f0; }
+.metric-card.danger { border-top: 3px solid #A32D2D; }
+.metric-card.ok { border-top: 3px solid #3B6D11; }
+.metric-num { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+.metric-label { font-size: 12px; color: #64748b; text-transform: uppercase; }
+.summary-row { display: flex; gap: 15px; margin-bottom: 25px; }
+
+.value-row { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #f1f5f9; }
+.value-left { flex: 1; }
+.value-right { text-align: right; margin-left: 20px; }
+.value-name { font-weight: 600; margin-bottom: 8px; }
+.value-range { font-size: 11px; color: #94a3b8; margin-top: 6px; }
+.plain-eng { font-size: 13px; color: #475569; margin-top: 8px; font-style: italic; }
+.value-bar-wrap { background: #f1f5f9; height: 4px; border-radius: 2px; width: 100%; }
+.value-bar { height: 100%; border-radius: 2px; }
+
+/* Risk Predictor */
+.risk-card { padding: 15px; border-radius: 12px; margin-bottom: 15px; }
+.risk-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.risk-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; }
+.risk-name { font-weight: 600; font-size: 15px; }
+.risk-pct { font-size: 13px; font-weight: 700; }
+#risk-chart { margin-top: 30px; height: 300px; }
+
+/* Chatbot */
+.chat-messages { height: 400px; overflow-y: auto; padding: 20px; background: #f8fafc; border-radius: 12px; margin-bottom: 15px; border: 1px solid #e2e8f0; }
+.chat-msg { display: flex; gap: 12px; margin-bottom: 15px; }
+.chat-msg.user { flex-direction: row-reverse; }
+.chat-bubble { padding: 12px 16px; border-radius: 12px; font-size: 14px; max-width: 80%; }
+.chat-msg.bot .chat-bubble { background: #fff; border: 1px solid #e2e8f0; }
+.chat-msg.user .chat-bubble { background: #185FA5; color: #fff; }
+.chat-av { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0; }
+.chat-av.bot { background: #E6F1FB; color: #185FA5; }
+.chat-av.user { background: #1a1a2e; color: #fff; }
+
+.chat-input-wrap { display: flex; gap: 10px; }
+.chat-input-wrap input { flex: 1; padding: 12px 16px; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; }
+.chat-input-wrap input:focus { border-color: #185FA5; }
+
+.dot { height: 6px; width: 6px; background-color: #94a3b8; border-radius: 50%; display: inline-block; margin: 0 2px; animation: bounce 1.4s infinite ease-in-out both; }
+.dot:nth-child(1) { animation-delay: -0.32s; }
+.dot:nth-child(2) { animation-delay: -0.16s; }
+@keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
+
+.quick-chip { padding: 6px 14px; background: #fff; border: 1px solid #185FA5; color: #185FA5; border-radius: 20px; font-size: 12px; cursor: pointer; transition: 0.2s; }
+.quick-chip:hover { background: #185FA5; color: #fff; }
+
+.footer { text-align: center; padding: 30px; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0; margin-top: 50px; }

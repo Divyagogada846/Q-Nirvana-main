@@ -1,0 +1,10 @@
+flask
+numpy
+scikit-learn
+pandas
+pytesseract
+Pillow
+spacy
+nltk
+mysql-connector-python
+python-dotenv

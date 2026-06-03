@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedAI — Rare Disease Predictor</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<style>
+/* ── Page-specific overrides (shared style.css already loaded) ── */
+
+.m5-hero {
+    background: linear-gradient(135deg, #185FA5 0%, #0C447C 100%);
+    color: #fff; padding: 48px 20px 40px; text-align: center;
+}
+.m5-hero h2 { font-size: 30px; font-weight: 800; margin-bottom: 8px; }
+.m5-hero p  { font-size: 16px; opacity: 0.88; max-width: 600px; margin: 0 auto; }
+.m5-badge {
+    display: inline-block; background: rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.35);
+    padding: 4px 14px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; margin-bottom: 16px; letter-spacing: 0.5px;
+}
+
+/* ── Two-column input layout ── */
+.input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+.input-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+@media (max-width: 700px) { .input-grid, .input-grid.three { grid-template-columns: 1fr; } }
+
+/* ── Input fields ── */
+.field-label {
+    font-size: 12px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.4px; color: #475569; margin-bottom: 6px;
+}
+.field-hint { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+
+select, input[type=text], input[type=number] {
+    width: 100%; padding: 10px 14px;
+    border: 1px solid #e2e8f0; border-radius: 10px;
+    font-size: 14px; font-family: inherit; color: #1a1a2e;
+    background: #fff; outline: none; transition: border 0.15s;
+}
+select:focus, input:focus { border-color: #185FA5; }
+
+.gene-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px; }
+.gene-chip {
+    padding: 4px 12px; border-radius: 20px;
+    background: #E6F1FB; color: #185FA5;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    border: 1px solid transparent; transition: 0.15s;
+}
+.gene-chip:hover, .gene-chip.active { background: #185FA5; color: #fff; }
+
+/* ── Frequency slider ── */
+.slider-wrap { display: flex; align-items: center; gap: 12px; }
+.slider-wrap input[type=range] { flex: 1; accent-color: #185FA5; }
+.slider-val { font-size: 13px; font-weight: 700; color: #185FA5; min-width: 72px; }
+
+/* ── Toggle switch for compound het ── */
+.toggle-row { display: flex; align-items: center; gap: 12px; }
+.toggle { position: relative; width: 42px; height: 24px; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+    position: absolute; inset: 0; border-radius: 34px;
+    background: #cbd5e1; cursor: pointer; transition: 0.3s;
+}
+.toggle-slider:before {
+    content: ""; position: absolute;
+    height: 18px; width: 18px; left: 3px; bottom: 3px;
+    background: #fff; border-radius: 50%; transition: 0.3s;
+}
+.toggle input:checked + .toggle-slider { background: #185FA5; }
+.toggle input:checked + .toggle-slider:before { transform: translateX(18px); }
+.toggle-label { font-size: 13px; color: #475569; font-weight: 500; }
+
+/* ── Result sections ── */
+.result-section { margin-top: 32px; display: none; }
+.result-section.show { display: block; }
+
+/* ── Confidence badge bar ── */
+.disease-candidate {
+    background: #fff; border: 1px solid #e2e8f0;
+    border-radius: 14px; padding: 20px 22px;
+    margin-bottom: 14px; cursor: pointer;
+    transition: box-shadow 0.15s, border-color 0.15s;
+    position: relative;
+}
+.disease-candidate:hover { border-color: #185FA5; box-shadow: 0 4px 16px rgba(24,95,165,0.1); }
+.disease-candidate.top { border-left: 4px solid #185FA5; }
+.dc-top-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.dc-name { font-size: 17px; font-weight: 700; color: #1a1a2e; margin-bottom: 3px; }
+.dc-ids  { font-size: 12px; color: #94a3b8; }
+.dc-conf { font-size: 26px; font-weight: 800; }
+.conf-high   { color: #A32D2D; }
+.conf-medium { color: #854F0B; }
+.conf-low    { color: #185FA5; }
+
+.dc-bar-wrap { height: 5px; background: #f1f5f9; border-radius: 3px; margin: 10px 0 10px; overflow: hidden; }
+.dc-bar { height: 5px; border-radius: 3px; transition: width 0.6s ease; }
+
+.dc-meta-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.dc-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+}
+.pill-blue   { background: #E6F1FB; color: #0C447C; }
+.pill-red    { background: #FCEBEB; color: #A32D2D; }
+.pill-amber  { background: #FAEEDA; color: #633806; }
+.pill-green  { background: #EAF3DE; color: #3B6D11; }
+.pill-purple { background: #EEEDFE; color: #3C3489; }
+.pill-gray   { background: #f1f5f9; color: #475569; }
+.pill-coral  { background: #FAECE7; color: #712B13; }
+
+/* ── ACMG criteria box ── */
+.acmg-box {
+    background: #f8fafc; border: 1px solid #e2e8f0;
+    border-radius: 12px; padding: 16px 18px; margin-top: 14px;
+}
+.acmg-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin-bottom: 10px; }
+.acmg-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.acmg-chip {
+    padding: 4px 10px; border-radius: 6px;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.3px;
+    cursor: help;
+}
+.acmg-pathogenic { background: #FCEBEB; color: #A32D2D; }
+.acmg-benign     { background: #EAF3DE; color: #3B6D11; }
+
+/* ── Detail expanded panel ── */
+.detail-panel {
+    display: none; background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    padding: 18px 22px; margin: 14px -22px -20px;
+    border-radius: 0 0 14px 14px;
+}
+.detail-panel.open { display: block; }
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.detail-section-title {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; color: #94a3b8; margin-bottom: 8px;
+}
+.detail-list { list-style: none; padding: 0; }
+.detail-list li {
+    padding: 5px 0; border-bottom: 1px solid #e2e8f0;
+    font-size: 13px; color: #334155;
+    display: flex; align-items: flex-start; gap: 6px;
+}
+.detail-list li:last-child { border: none; }
+.detail-list li::before { content: "•"; color: #185FA5; flex-shrink: 0; font-weight: 700; }
+
+/* ── Summary stat cards ── */
+.result-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+@media (max-width: 700px) { .result-stats { grid-template-columns: repeat(2, 1fr); } }
+
+.stat-card {
+    background: #fff; border: 1px solid #e2e8f0;
+    border-radius: 12px; padding: 16px 18px; text-align: center;
+}
+.stat-num   { font-size: 28px; font-weight: 800; margin-bottom: 2px; }
+.stat-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-blue   .stat-num { color: #185FA5; }
+.stat-red    .stat-num { color: #A32D2D; }
+.stat-amber  .stat-num { color: #854F0B; }
+.stat-green  .stat-num { color: #3B6D11; }
+
+/* ── Cross-module link ── */
+.cross-link {
+    background: #fffbeb; border: 1px solid #fef3c7;
+    border-radius: 12px; padding: 16px 20px;
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 24px;
+}
+.cross-link span { font-size: 14px; color: #92400e; font-weight: 500; }
+
+/* ── Tooltip for ACMG ── */
+.acmg-chip { position: relative; }
+
+/* ── Not found message ── */
+.not-found-box {
+    background: #FAEEDA; border: 1px solid #fcd89c;
+    border-radius: 12px; padding: 20px 22px;
+}
+.not-found-box h4 { color: #633806; font-size: 15px; margin-bottom: 8px; }
+.not-found-box p  { color: #854F0B; font-size: 13px; line-height: 1.6; }
+
+/* ── Loading state ── */
+#rare-loading { display: none; text-align: center; padding: 40px 20px; }
+.spinner {
+    width: 36px; height: 36px; border-radius: 50%;
+    border: 3px solid #e2e8f0; border-top-color: #185FA5;
+    animation: spin 0.8s linear infinite; margin: 0 auto 14px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── DB info bar ── */
+.db-info-bar {
+    background: #E6F1FB; border: 1px solid #B5D4F4;
+    border-radius: 10px; padding: 10px 16px;
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 20px; font-size: 13px; color: #0C447C;
+}
+.db-info-bar strong { font-weight: 700; }
+</style>
+</head>
+<body>
+
+<!-- ── Top bar (matches all other pages) ── -->
+<div class="topbar">
+    <a href="/">MedAI</a>
+    <span>Module 5 — Rare Disease DNA Predictor</span>
+</div>
+
+<!-- ── Hero ── -->
+<div class="m5-hero">
+    <div class="m5-badge">MODULE 5 · DNA + VUS ENGINE</div>
+    <h2>Rare Disease Predictor</h2>
+    <p>Enter DNA variant data or VUS details to identify rare genetic diseases using ACMG 2015 classification and Orphanet/OMIM pattern matching.</p>
+</div>
+
+<div class="container">
+
+    <!-- ── DB Info ── -->
+    <div class="db-info-bar" style="margin-top: 28px;">
+        <span>🧬</span>
+        <span>Database: <strong>{{ db_size }}+ rare diseases</strong> · Orphanet + OMIM + ClinVar integrated · ACMG 2015 classification · Supported genes: <strong>{{ gene_list | join(", ") }}</strong></span>
+    </div>
+
+    <!-- ── INPUT CARD ── -->
+    <div class="card">
+        <h2>DNA Variant Input</h2>
+        <p class="subtitle">Enter variant details from your genomic report, WGS/WES result, or direct DNA panel.</p>
+
+        <!-- Gene -->
+        <div style="margin-bottom: 20px;">
+            <div class="field-label">Gene Symbol <span style="color:#A32D2D">*</span></div>
+            <input type="text" id="inp-gene" placeholder="e.g. NF1, MEFV, GLA, ATP7B, CFTR, FBN1"
+                   oninput="syncGeneChips(this.value)" style="margin-bottom: 8px;">
+            <div class="field-hint">Click a common gene below or type your own:</div>
+            <div class="gene-chips" id="geneChips">
+                {% for gene in gene_list %}
+                <span class="gene-chip" onclick="selectGene('{{ gene }}')">{{ gene }}</span>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Variant notation + type -->
+        <div class="input-grid">
+            <div>
+                <div class="field-label">Variant Notation (HGVS)</div>
+                <input type="text" id="inp-variant" placeholder="e.g. p.Arg1947*, c.2033del, p.M694V">
+                <div class="field-hint">Protein or cDNA notation from report</div>
+            </div>
+            <div>
+                <div class="field-label">Variant Type <span style="color:#A32D2D">*</span></div>
+                <select id="inp-vtype">
+                    <option value="">— Select type —</option>
+                    <option value="missense">Missense</option>
+                    <option value="nonsense">Nonsense (stop-gained)</option>
+                    <option value="frameshift">Frameshift</option>
+                    <option value="splice_site">Splice site</option>
+                    <option value="deletion">Deletion (in-frame)</option>
+                    <option value="duplication">Duplication</option>
+                    <option value="synonymous">Synonymous (silent)</option>
+                    <option value="intron">Intronic</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Frequency + CADD -->
+        <div class="input-grid">
+            <div>
+                <div class="field-label">gnomAD Allele Frequency</div>
+                <div class="slider-wrap">
+                    <input type="range" id="inp-freq" min="0" max="5" step="0.001" value="0"
+                           oninput="updateFreqDisplay(this.value)">
+                    <span class="slider-val" id="freq-display">Absent (0)</span>
+                </div>
+                <div class="field-hint">0 = absent from population database</div>
+            </div>
+            <div>
+                <div class="field-label">CADD Phred Score</div>
+                <div class="slider-wrap">
+                    <input type="range" id="inp-cadd" min="0" max="50" step="0.5" value="25"
+                           oninput="updateCaddDisplay(this.value)">
+                    <span class="slider-val" id="cadd-display">25.0</span>
+                </div>
+                <div class="field-hint">≥20 = deleterious · ≥30 = highly deleterious</div>
+            </div>
+        </div>
+
+        <!-- Compound het toggle + extra gene -->
+        <div class="input-grid" style="margin-bottom: 10px;">
+            <div>
+                <div class="field-label">Compound Heterozygosity</div>
+                <div class="toggle-row" style="margin-top: 8px;">
+                    <label class="toggle">
+                        <input type="checkbox" id="inp-comphet" onchange="toggleCompHet(this)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span class="toggle-label">Second pathogenic variant present (AR disease)</span>
+                </div>
+            </div>
+            <div id="comphet-gene-wrap" style="display:none;">
+                <div class="field-label">Second Variant / Gene</div>
+                <input type="text" id="inp-comphet-gene" placeholder="e.g. MEFV M680I">
+                <div class="field-hint">HGVS notation of second variant</div>
+            </div>
+        </div>
+
+        <!-- Additional panel genes -->
+        <div style="margin-bottom: 20px;">
+            <div class="field-label">Additional Panel Genes (optional)</div>
+            <input type="text" id="inp-extra-genes" placeholder="e.g. COL3A1, FBN1, GBA (comma-separated)">
+            <div class="field-hint">For multi-gene panel results — will be scored independently</div>
+        </div>
+
+        <button class="btn" id="rare-btn" onclick="runRarePrediction()">
+            Analyse Variant &amp; Predict Disease
+        </button>
+    </div>
+
+    <!-- ── LOADING ── -->
+    <div id="rare-loading">
+        <div class="spinner"></div>
+        <p style="color:#64748b; font-size: 14px;">Running ACMG classification &amp; rare disease matching…</p>
+    </div>
+
+    <!-- ── RESULTS ── -->
+    <div id="rare-result" class="result-section">
+        <!-- populated by JS -->
+    </div>
+
+</div><!-- /container -->
+
+<div class="footer">
+    MedAI Module 5 — Research use only. ACMG classification is automated and must be confirmed by a certified clinical geneticist.
+</div>
+
+<script src="{{ url_for('static', filename='main.js') }}"></script>
+<script>
+// ─── Module 5 — Rare Disease Predictor ───────────────────────────────────────
+
+const ACMG_DESCRIPTIONS = {
+    PVS1: "Null variant in a gene where LOF is a disease mechanism",
+    PS1:  "Same amino acid change as established pathogenic variant",
+    PS3:  "Functional studies show damaging effect",
+    PS4:  "Prevalence increased in affected vs controls",
+    PM1:  "Located in mutational hot spot / critical domain",
+    PM2:  "Absent or very low frequency in gnomAD",
+    PM3:  "Detected in trans with pathogenic variant (AR)",
+    PM4:  "Protein length change",
+    PM5:  "Novel missense at same position as known pathogenic",
+    PP2:  "Missense in low benign-rate gene",
+    PP3:  "Multiple in silico tools predict damaging",
+    PP4:  "Phenotype highly specific for gene",
+    BA1:  "Allele frequency >5% in gnomAD (benign)",
+    BS1:  "Allele frequency too high for disorder",
+    BS3:  "Functional studies show no damaging effect",
+    BP4:  "In silico tools predict benign effect",
+    BP7:  "Silent variant, no predicted splice impact"
+};
+
+const SEV_CONF = {
+    critical: { barColor: "#A32D2D", pillClass: "pill-red",   label: "Critical" },
+    high:     { barColor: "#854F0B", pillClass: "pill-amber",  label: "High" },
+    medium:   { barColor: "#185FA5", pillClass: "pill-blue",   label: "Medium" },
+    low:      { barColor: "#3B6D11", pillClass: "pill-green",  label: "Low" }
+};
+
+const ACMG_COLOR = {
+    "Pathogenic":        "pill-red",
+    "Likely Pathogenic": "pill-amber",
+    "VUS":               "pill-purple",
+    "Likely Benign":     "pill-green",
+    "Benign":            "pill-gray"
+};
+
+function selectGene(gene) {
+    document.getElementById("inp-gene").value = gene;
+    syncGeneChips(gene);
+}
+
+function syncGeneChips(val) {
+    document.querySelectorAll(".gene-chip").forEach(c => {
+        c.classList.toggle("active", c.textContent.trim() === val.trim().toUpperCase());
+    });
+}
+
+function updateFreqDisplay(v) {
+    const f = parseFloat(v);
+    document.getElementById("freq-display").textContent =
+        f === 0 ? "Absent (0)" : f.toFixed(3) + "%";
+}
+
+function updateCaddDisplay(v) {
+    document.getElementById("cadd-display").textContent = parseFloat(v).toFixed(1);
+}
+
+function toggleCompHet(cb) {
+    document.getElementById("comphet-gene-wrap").style.display = cb.checked ? "block" : "none";
+}
+
+async function runRarePrediction() {
+    const gene     = document.getElementById("inp-gene").value.trim();
+    const variant  = document.getElementById("inp-variant").value.trim();
+    const vtype    = document.getElementById("inp-vtype").value;
+    const freq     = parseFloat(document.getElementById("inp-freq").value) / 100;
+    const cadd     = parseFloat(document.getElementById("inp-cadd").value);
+    const comphet  = document.getElementById("inp-comphet").checked;
+    const extras   = document.getElementById("inp-extra-genes").value;
+
+    if (!gene) { alert("Please enter a gene symbol."); return; }
+    if (!vtype) { alert("Please select the variant type."); return; }
+
+    const extraGenes = extras ? extras.split(",").map(g => g.trim()).filter(Boolean) : [];
+
+    const btn = document.getElementById("rare-btn");
+    showLoading(btn, "Analysing…");
+    document.getElementById("rare-loading").style.display = "block";
+    document.getElementById("rare-result").classList.remove("show");
+
+    try {
+        const data = await apiPost("/api/rare", {
+            gene, variant_notation: variant, variant_type: vtype,
+            allele_freq: freq, cadd_score: cadd,
+            compound_het: comphet, additional_genes: extraGenes
+        });
+        renderRareResult(data);
+    } catch(e) {
+        document.getElementById("rare-result").innerHTML =
+            `<div class="error-box">Error connecting to server. Is Flask running? (${e.message})</div>`;
+        document.getElementById("rare-result").classList.add("show");
+    } finally {
+        hideLoading(btn);
+        document.getElementById("rare-loading").style.display = "none";
+    }
+}
+
+function renderRareResult(data) {
+    const el = document.getElementById("rare-result");
+    el.classList.add("show");
+
+    if (data.status === "error" || data.status === "not_found") {
+        el.innerHTML = `
+        <div class="not-found-box">
+            <h4>⚠ ${data.status === "not_found" ? "Gene Not Found in Database" : "Analysis Error"}</h4>
+            <p>${data.message}</p>
+            ${data.supported_genes ? `<p style="margin-top:10px;"><strong>Supported genes:</strong> ${data.supported_genes.join(", ")}</p>` : ""}
+        </div>`;
+        return;
+    }
+
+    const top = data.candidates[0];
+    const sev = SEV_CONF[top.severity] || SEV_CONF.medium;
+
+    // ── Summary stats ──
+    let html = `
+    <div class="result-stats">
+        <div class="stat-card stat-blue">
+            <div class="stat-num">${data.candidates.length}</div>
+            <div class="stat-label">Diseases Found</div>
+        </div>
+        <div class="stat-card ${top.top_confidence >= 70 ? 'stat-red' : top.top_confidence >= 45 ? 'stat-amber' : 'stat-blue'}">
+            <div class="stat-num">${top.confidence}%</div>
+            <div class="stat-label">Top Confidence</div>
+        </div>
+        <div class="stat-card stat-amber">
+            <div class="stat-num">${top.acmg_criteria.length}</div>
+            <div class="stat-label">ACMG Criteria</div>
+        </div>
+        <div class="stat-card stat-green">
+            <div class="stat-num">${data.db_size}+</div>
+            <div class="stat-label">DB Diseases</div>
+        </div>
+    </div>
+
+    <h3 style="font-size:18px; margin-bottom:16px; color:#0C447C;">
+        Disease Candidates — <span style="font-weight:400; font-size:15px; color:#64748b;">
+        Ranked by ACMG pathogenicity confidence</span>
+    </h3>`;
+
+    // ── Candidate cards ──
+    data.candidates.forEach((c, i) => {
+        const cs = SEV_CONF[c.severity] || SEV_CONF.medium;
+        const confClass = c.confidence >= 70 ? "conf-high" : c.confidence >= 45 ? "conf-medium" : "conf-low";
+        const acmgPill  = ACMG_COLOR[c.acmg_classification] || "pill-gray";
+        const barW = c.confidence;
+
+        // ACMG criteria chips
+        const acmgChips = c.acmg_criteria.map(cr => {
+            const isPathogenic = !cr.startsWith("B");
+            return `<span class="acmg-chip ${isPathogenic ? 'acmg-pathogenic' : 'acmg-benign'}"
+                         title="${ACMG_DESCRIPTIONS[cr] || cr}">${cr}</span>`;
+        }).join("");
+
+        // Symptom list
+        const symptoms = (c.symptoms || []).slice(0, 5).map(s =>
+            `<li>${s}</li>`).join("");
+
+        // Management list
+        const mgmt = (c.management || []).slice(0, 4).map(m =>
+            `<li>${m}</li>`).join("");
+
+        html += `
+        <div class="disease-candidate ${i === 0 ? 'top' : ''}" id="dc-${i}">
+            <div class="dc-top-row">
+                <div>
+                    <div class="dc-name">${i === 0 ? '★ ' : ''}${c.disease}</div>
+                    <div class="dc-ids">Gene: <strong>${c.gene}</strong> · OMIM: #${c.omim} · ORPHA: ${c.orpha} · Chr: ${c.chromosome}</div>
+                </div>
+                <div class="dc-conf ${confClass}">${c.confidence}%</div>
+            </div>
+
+            <div class="dc-bar-wrap">
+                <div class="dc-bar" style="width:${barW}%; background:${cs.barColor};"></div>
+            </div>
+
+            <div class="dc-meta-row">
+                <span class="dc-pill ${acmgPill}">${c.acmg_classification}</span>
+                <span class="dc-pill ${cs.pillClass}">${cs.label} severity</span>
+                <span class="dc-pill pill-blue">${c.inheritance}</span>
+                <span class="dc-pill pill-gray">${c.category}</span>
+                <span class="dc-pill pill-gray">Onset: ${c.onset}</span>
+                <span class="dc-pill pill-gray">Prev: ${c.prevalence}</span>
+            </div>
+
+            <div class="acmg-box">
+                <div class="acmg-title">ACMG 2015 Criteria Met (score: ${c.acmg_score > 0 ? '+' : ''}${c.acmg_score})</div>
+                <div class="acmg-chips">${acmgChips || '<span style="font-size:12px;color:#94a3b8;">No criteria triggered</span>'}</div>
+            </div>
+
+            <button onclick="toggleDetail(${i})"
+                style="margin-top: 12px; background: none; border: 1px solid #e2e8f0;
+                       padding: 6px 14px; border-radius: 8px; font-size: 12px;
+                       color: #185FA5; cursor: pointer; font-weight: 600; transition: 0.15s;"
+                id="dc-btn-${i}">
+                ▾ Show clinical details
+            </button>
+
+            <div class="detail-panel" id="dp-${i}">
+                <div class="detail-grid">
+                    <div>
+                        <div class="detail-section-title">🩺 Clinical Features</div>
+                        <ul class="detail-list">${symptoms}</ul>
+                        ${c.symptoms.length > 5 ? `<p style="font-size:11px;color:#94a3b8;margin-top:6px;">+${c.symptoms.length-5} more features in full records</p>` : ''}
+                    </div>
+                    <div>
+                        <div class="detail-section-title">💊 Management</div>
+                        <ul class="detail-list">${mgmt}</ul>
+                        <div style="margin-top: 12px;">
+                            <div class="detail-section-title">📋 Identifiers</div>
+                            <div style="font-size:12px; color:#475569; line-height:1.8;">
+                                ICD-10: <strong>${c.icd10}</strong><br>
+                                ClinVar: <em>${c.clinvar_significance}</em><br>
+                                Refs: ${c.research_refs.join(" · ")}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    });
+
+    // ── Cross-module link ──
+    html += `
+    <div class="cross-link">
+        <span>🔗 Based on predicted disease, check your long-term health risks</span>
+        <a href="/risk" class="link-btn">Go to Risk Predictor →</a>
+    </div>
+    <div class="cross-link" style="margin-top:12px;">
+        <span>💬 Ask about management, diet or medicines for ${top.disease}</span>
+        <a href="/support" class="link-btn">Open Patient Support →</a>
+    </div>`;
+
+    el.innerHTML = html;
+}
+
+function toggleDetail(i) {
+    const panel = document.getElementById(`dp-${i}`);
+    const btn   = document.getElementById(`dc-btn-${i}`);
+    const open  = panel.classList.toggle("open");
+    btn.textContent = open ? "▴ Hide clinical details" : "▾ Show clinical details";
+}
+</script>
+</body>
+</html>

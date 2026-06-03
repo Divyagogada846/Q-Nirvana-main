@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedAI — Report Analyzer</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F7F5F0;
+    --surface: #FFFFFF;
+    --blue: #1A4F8A;
+    --blue-light: #EBF2FB;
+    --blue-mid: #3A72B8;
+    --green: #2A7A56;
+    --green-light: #E6F5ED;
+    --amber: #C06B0B;
+    --amber-light: #FEF3E5;
+    --red: #B83232;
+    --red-light: #FDEAEA;
+    --text: #1A1A2E;
+    --muted: #64748B;
+    --border: #E2E8F0;
+    --shadow: 0 4px 24px rgba(26,79,138,0.08);
+    --radius: 16px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── Top Bar ── */
+  .topbar {
+    background: var(--blue);
+    color: #fff;
+    padding: 14px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 10px; }
+  .topbar-logo { font-family: 'DM Serif Display', serif; font-size: 22px; letter-spacing: 0.5px; }
+  .topbar-sep { opacity: 0.3; }
+  .topbar-module { font-size: 13px; opacity: 0.75; }
+  .topbar-back {
+    font-size: 12px; color: rgba(255,255,255,0.7);
+    text-decoration: none; border: 1px solid rgba(255,255,255,0.25);
+    padding: 5px 14px; border-radius: 20px;
+    transition: all 0.2s;
+  }
+  .topbar-back:hover { color: #fff; border-color: rgba(255,255,255,0.6); }
+
+  /* ── Hero ── */
+  .hero {
+    background: linear-gradient(135deg, var(--blue) 0%, #0C3568 100%);
+    color: #fff;
+    padding: 48px 32px 40px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; top: -60px; right: -60px;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);
+    padding: 5px 14px; border-radius: 20px;
+    font-size: 12px; margin-bottom: 16px;
+  }
+  .hero h2 { font-family: 'DM Serif Display', serif; font-size: 30px; margin-bottom: 10px; }
+  .hero p { font-size: 15px; opacity: 0.78; max-width: 560px; margin: 0 auto; line-height: 1.6; }
+
+  /* ── Main Layout ── */
+  .main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 36px 24px 60px;
+  }
+
+  /* ── Input Card ── */
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    padding: 32px;
+    margin-bottom: 28px;
+  }
+  .card-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 19px;
+    color: var(--blue);
+    margin-bottom: 22px;
+  }
+
+  /* ── Tab Switcher ── */
+  .tab-group {
+    display: flex;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 11px 16px;
+    border: none;
+    background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--muted);
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+  }
+  .tab-btn.active {
+    background: var(--blue);
+    color: #fff;
+  }
+  .tab-btn:not(.active):hover { background: var(--blue-light); color: var(--blue); }
+
+  /* ── Upload Zone ── */
+  .upload-zone {
+    border: 2px dashed #CBD5E1;
+    border-radius: 14px;
+    padding: 40px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s;
+    background: #FAFBFC;
+    position: relative;
+  }
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--blue-mid);
+    background: var(--blue-light);
+  }
+  .upload-zone input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+  .upload-icon { font-size: 44px; margin-bottom: 12px; }
+  .upload-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .upload-sub { font-size: 13px; color: var(--muted); }
+  .upload-accepted {
+    margin-top: 12px;
+    display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+  }
+  .file-badge {
+    padding: 3px 10px; border-radius: 10px;
+    font-size: 11px; font-weight: 600;
+    background: var(--blue-light); color: var(--blue);
+  }
+  .file-badge.selected {
+      background: var(--blue);
+      color: #fff;
+  }
+  .file-preview {
+    margin-top: 16px; display: flex; align-items: center; gap: 12px;
+    background: var(--blue-light); border-radius: 10px; padding: 12px 16px;
+    text-align: left; display: none;
+  }
+  .file-preview.show { display: flex; }
+  .file-preview-name { font-size: 13px; font-weight: 600; color: var(--blue); flex: 1; }
+  .file-preview-size { font-size: 11px; color: var(--muted); }
+  .file-clear-btn {
+    background: none; border: none; cursor: pointer;
+    color: var(--muted); font-size: 16px; padding: 2px;
+  }
+  .file-clear-btn:hover { color: var(--red); }
+
+  /* ── Text Panel ── */
+  .text-panel { display: none; }
+  .text-panel.active { display: block; }
+  .upload-panel { display: none; }
+  .upload-panel.active { display: block; }
+
+  textarea {
+    width: 100%;
+    min-height: 180px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: var(--text);
+    resize: vertical;
+    transition: border-color 0.2s;
+    background: #FAFBFC;
+  }
+  textarea:focus { outline: none; border-color: var(--blue-mid); background: #fff; }
+  textarea::placeholder { color: #A0AEC0; }
+
+  /* ── Gender Select ── */
+  .row { display: flex; gap: 16px; align-items: flex-end; margin-top: 18px; flex-wrap: wrap; }
+  .field { flex: 1; min-width: 160px; }
+  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+  select {
+    width: 100%; padding: 10px 14px;
+    border: 1.5px solid var(--border); border-radius: 10px;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text);
+    background: #FAFBFC; cursor: pointer; transition: border-color 0.2s;
+  }
+  select:focus { outline: none; border-color: var(--blue-mid); }
+
+  /* ── Analyze Button ── */
+  .analyze-btn {
+    padding: 12px 36px;
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 8px;
+    white-space: nowrap;
+  }
+  .analyze-btn:hover { background: #163F72; transform: translateY(-1px); box-shadow: 0 6px 16px rgba(26,79,138,0.2); }
+  .analyze-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+  /* ── Loading Spinner ── */
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Results ── */
+  #results { display: none; }
+
+  .summary-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .stat-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: var(--shadow);
+  }
+  .stat-box.red { background: var(--red-light); border-color: #F5C6C6; }
+  .stat-box.green { background: var(--green-light); border-color: #B2E0CC; }
+  .stat-num { font-family: 'DM Serif Display', serif; font-size: 38px; line-height: 1; }
+  .stat-box.red .stat-num { color: var(--red); }
+  .stat-box.green .stat-num { color: var(--green); }
+  .stat-box:not(.red):not(.green) .stat-num { color: var(--blue); }
+  .stat-label { font-size: 12px; font-weight: 600; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  .results-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .results-header {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .results-title { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--blue); }
+  .filter-btns { display: flex; gap: 6px; }
+  .filter-btn {
+    padding: 5px 14px; border-radius: 20px; border: 1.5px solid var(--border);
+    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600;
+    cursor: pointer; background: transparent; color: var(--muted); transition: all 0.15s;
+  }
+  .filter-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+  .filter-btn:hover:not(.active) { border-color: var(--blue-mid); color: var(--blue); }
+
+  .param-list { padding: 8px 0; }
+
+  .param-row {
+    display: flex;
+    align-items: center;
+    padding: 18px 24px;
+    border-bottom: 1px solid #F0F4F8;
+    gap: 16px;
+    transition: background 0.15s;
+  }
+  .param-row:last-child { border-bottom: none; }
+  .param-row:hover { background: #F8FAFC; }
+
+  .param-icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .param-icon.normal { background: var(--green-light); }
+  .param-icon.high { background: var(--red-light); }
+  .param-icon.low { background: var(--amber-light); }
+
+  .param-info { flex: 1; min-width: 0; }
+  .param-name { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .param-range { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .bar-wrap { height: 5px; background: #EEF2F7; border-radius: 3px; overflow: hidden; position: relative; }
+  .bar-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+
+  .param-value-col { text-align: right; flex-shrink: 0; min-width: 80px; }
+  .param-value { font-family: 'DM Serif Display', serif; font-size: 24px; }
+  .param-value.normal { color: var(--green); }
+  .param-value.high { color: var(--red); }
+  .param-value.low { color: var(--amber); }
+  .param-unit { font-size: 11px; color: var(--muted); }
+
+  .status-badge {
+    display: inline-block; padding: 3px 10px; border-radius: 10px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+    margin-top: 4px;
+  }
+  .status-badge.normal { background: var(--green-light); color: var(--green); }
+  .status-badge.high { background: var(--red-light); color: var(--red); }
+  .status-badge.low { background: var(--amber-light); color: var(--amber); }
+
+  .param-explanation {
+    margin-top: 6px;
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.6;
+    padding-top: 6px;
+    border-top: 1px dashed #E8EDF3;
+    display: none;
+  }
+  .param-row.expanded .param-explanation { display: block; }
+  .expand-btn {
+    background: none; border: none; cursor: pointer;
+    color: var(--muted); font-size: 11px; margin-top: 4px;
+    font-family: 'DM Sans', sans-serif; padding: 0;
+  }
+  .expand-btn:hover { color: var(--blue); }
+
+  /* ── Cross module banner ── */
+  .cross-banner {
+    margin-top: 20px;
+    background: linear-gradient(135deg, var(--blue-light) 0%, #DDE9F8 100%);
+    border: 1px solid #B5D4F4;
+    border-radius: 14px;
+    padding: 18px 24px;
+    display: flex; align-items: center; gap: 16px;
+    flex-wrap: wrap;
+  }
+  .cross-banner-text { flex: 1; font-size: 14px; color: var(--blue); font-weight: 500; }
+  .cross-banner-link {
+    padding: 8px 20px; background: var(--blue); color: #fff;
+    border-radius: 10px; font-size: 13px; font-weight: 600;
+    text-decoration: none; transition: background 0.2s;
+  }
+  .cross-banner-link:hover { background: #163F72; }
+
+  /* ── Error ── */
+  .error-box {
+    background: var(--red-light); border: 1px solid #F5C6C6;
+    border-radius: 12px; padding: 16px 20px;
+    color: var(--red); font-size: 14px;
+  }
+
+  /* ── Sample Reports ── */
+  .samples-section { margin-bottom: 28px; }
+  .samples-label {
+    font-size: 11px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+  }
+  .samples-label::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+  .samples-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 10px;
+  }
+  .sample-card {
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+    background: var(--surface);
+    transition: all 0.2s;
+    text-align: left;
+  }
+  .sample-card:hover {
+    border-color: var(--blue-mid);
+    background: var(--blue-light);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(26,79,138,0.1);
+  }
+  .sample-card.selected {
+    border-color: var(--blue);
+    background: var(--blue-light);
+  }
+  .sample-emoji { font-size: 22px; margin-bottom: 8px; display: block; }
+  .sample-name { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+  .sample-desc { font-size: 11px; color: var(--muted); line-height: 1.5; }
+  .sample-tags { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px; }
+  .sample-tag {
+    font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 8px;
+    background: var(--red-light); color: var(--red);
+  }
+  .sample-tag.ok { background: var(--green-light); color: var(--green); }
+  .sample-tag.warn { background: var(--amber-light); color: var(--amber); }
+
+  /* ── Sample Preview Box ── */
+  .sample-preview-box {
+    display: none;
+    margin-top: 12px;
+    background: #F8FAFC;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 12.5px;
+    font-family: 'Courier New', monospace;
+    color: var(--text);
+    line-height: 1.8;
+    white-space: pre-wrap;
+    max-height: 200px;
+    overflow-y: auto;
+    position: relative;
+  }
+  .sample-preview-box.show { display: block; }
+  .sample-preview-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .sample-preview-title { font-size: 12px; font-weight: 600; color: var(--blue); font-family: 'DM Sans', sans-serif; }
+  .use-sample-btn {
+    padding: 6px 18px; background: var(--blue); color: #fff;
+    border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif;
+    font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.2s;
+  }
+  .use-sample-btn:hover { background: #163F72; }
+
+  /* ── Disclaimer ── */
+  .disclaimer {
+    text-align: center; font-size: 12px; color: var(--muted);
+    padding: 20px 0 0; line-height: 1.6;
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .summary-strip { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .stat-num { font-size: 28px; }
+    .card { padding: 20px; }
+    .topbar { padding: 12px 16px; }
+    .main { padding: 20px 12px 40px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="topbar-logo">MedAI</span>
+    <span class="topbar-sep">|</span>
+    <span class="topbar-module">Module 2 — Report Analyzer</span>
+  </div>
+  <a href="/" class="topbar-back">← All Modules</a>
+</div>
+
+<div class="hero">
+  <div class="hero-badge">🔬 OCR + NLP Analysis</div>
+  <h2>Medical Report Analyzer</h2>
+  <p>Upload your lab report PDF or image, or paste the text. We extract values, compare with normal ranges, and explain results in plain language.</p>
+</div>
+
+<div class="main">
+
+  <!-- Sample Reports -->
+  <div class="samples-section">
+    <div class="samples-label">Try a Sample Report</div>
+    <div class="samples-grid">
+      <div class="sample-card" onclick="selectSample('diabetic')" id="sc-diabetic">
+        <span class="sample-emoji">🍬</span>
+        <div class="sample-name">Diabetic Profile</div>
+        <div class="sample-desc">High blood sugar, elevated HbA1c, cholesterol issues</div>
+        <div class="sample-tags">
+          <span class="sample-tag">High Sugar</span>
+          <span class="sample-tag">High HbA1c</span>
+          <span class="sample-tag">High LDL</span>
+        </div>
+      </div>
+      <div class="sample-card" onclick="selectSample('anemia')" id="sc-anemia">
+        <span class="sample-emoji">🩸</span>
+        <div class="sample-name">Anemia Profile</div>
+        <div class="sample-desc">Low hemoglobin, low RBC, low platelets</div>
+        <div class="sample-tags">
+          <span class="sample-tag">Low Hgb</span>
+          <span class="sample-tag">Low RBC</span>
+          <span class="sample-tag warn">Low Plt</span>
+        </div>
+      </div>
+      <div class="sample-card" onclick="selectSample('thyroid')" id="sc-thyroid">
+        <span class="sample-emoji">🦋</span>
+        <div class="sample-name">Thyroid Disorder</div>
+        <div class="sample-desc">Elevated TSH, low T3, hypothyroid pattern</div>
+        <div class="sample-tags">
+          <span class="sample-tag">High TSH</span>
+          <span class="sample-tag">Low T3</span>
+          <span class="sample-tag warn">Monitor</span>
+        </div>
+      </div>
+      <div class="sample-card" onclick="selectSample('kidney')" id="sc-kidney">
+        <span class="sample-emoji">🫘</span>
+        <div class="sample-name">Kidney Stress</div>
+        <div class="sample-desc">Elevated creatinine, high urea, liver enzymes raised</div>
+        <div class="sample-tags">
+          <span class="sample-tag">High Creat</span>
+          <span class="sample-tag">High Urea</span>
+          <span class="sample-tag">High SGPT</span>
+        </div>
+      </div>
+      <div class="sample-card" onclick="selectSample('healthy')" id="sc-healthy">
+        <span class="sample-emoji">✅</span>
+        <div class="sample-name">Healthy Profile</div>
+        <div class="sample-desc">All parameters within normal range</div>
+        <div class="sample-tags">
+          <span class="sample-tag ok">All Normal</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview box -->
+    <div id="sample-preview-box" class="sample-preview-box">
+      <div class="sample-preview-header">
+        <span class="sample-preview-title" id="sample-preview-title">Sample Report</span>
+        <button class="use-sample-btn" onclick="loadSampleIntoAnalyzer()">Use This Sample →</button>
+      </div>
+      <div id="sample-preview-text"></div>
+    </div>
+  </div>
+
+  <!-- Input Card -->
+  <div class="card">
+    <div class="card-title">Enter Your Lab Report</div>
+
+    <!-- Tab switcher -->
+    <div class="tab-group">
+      <button class="tab-btn active" id="tab-upload" onclick="switchTab('upload')">
+        📎 Upload File
+      </button>
+      <button class="tab-btn" id="tab-paste" onclick="switchTab('paste')">
+        📋 Paste Text
+      </button>
+    </div>
+
+    <!-- Upload Panel -->
+    <div class="upload-panel active" id="panel-upload">
+      <div class="upload-zone" id="upload-zone">
+        <input type="file" id="file-input" accept=".pdf,.png,.jpg,.jpeg,.txt" onchange="handleFileSelect(this)">
+        <div class="upload-icon">📄</div>
+        <div class="upload-title">Drop your lab report here</div>
+        <div class="upload-sub">or click to browse files</div>
+        <div class="upload-accepted">
+          <span class="file-badge">PDF</span>
+          <span class="file-badge">PNG</span>
+          <span class="file-badge">JPG</span>
+          <span class="file-badge">TXT</span>
+        </div>
+      </div>
+      <div class="file-preview" id="file-preview">
+        <span style="font-size:22px">📄</span>
+        <div style="flex:1">
+          <div class="file-preview-name" id="file-name">—</div>
+          <div class="file-preview-size" id="file-size">—</div>
+        </div>
+        <button class="file-clear-btn" onclick="clearFile()">✕</button>
+      </div>
+    </div>
+
+    <!-- Paste Panel -->
+    <div class="text-panel" id="panel-paste">
+      <textarea id="report-text" placeholder="Paste your lab report text here...&#10;&#10;Example:&#10;Hemoglobin: 10.2 g/dL&#10;WBC: 7.5 × 10³/µL&#10;Fasting Blood Sugar: 112 mg/dL&#10;TSH: 5.8 mIU/L&#10;Creatinine: 1.4 mg/dL"></textarea>
+    </div>
+
+    <!-- Gender + Analyze -->
+    <div class="row">
+      <div class="field">
+        <label>Patient Gender</label>
+        <select id="gender-select">
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+        </select>
+      </div>
+      <button class="analyze-btn" id="analyze-btn" onclick="analyzeReport()">
+        <div class="spinner" id="spinner"></div>
+        <span id="btn-label">Analyze Report</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div id="results">
+    <div class="summary-strip" id="summary-strip"></div>
+    <div class="results-card">
+      <div class="results-header">
+        <div class="results-title">Parameter Results</div>
+        <div class="filter-btns">
+          <button class="filter-btn active" onclick="filterResults('all', this)">All</button>
+          <button class="filter-btn" onclick="filterResults('abnormal', this)">Abnormal</button>
+          <button class="filter-btn" onclick="filterResults('normal', this)">Normal</button>
+        </div>
+      </div>
+      <div class="param-list" id="param-list"></div>
+    </div>
+
+    <div id="cross-banner-container"></div>
+    <div class="disclaimer">
+      ⚕️ For educational purposes only. Always consult a licensed medical professional for diagnosis and treatment.
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Sample Reports Data ───────────────────────────────────────────────────────
+const SAMPLES = {
+  diabetic: {
+    title: '🍬 Diabetic Profile — Mr. Ravi Kumar, 52 yrs, Male',
+    text: `PATIENT: Ravi Kumar    AGE: 52    GENDER: Male
+DATE: 25-Mar-2026    LAB: City Diagnostics
+
+=== BLOOD SUGAR ===
+Fasting Blood Sugar (FBS)   : 148 mg/dL
+Post Meal Glucose (PPBS)    : 218 mg/dL
+HbA1c                       : 8.2 %
+
+=== LIPID PROFILE ===
+Total Cholesterol            : 242 mg/dL
+LDL Cholesterol              : 158 mg/dL
+HDL Cholesterol              : 36 mg/dL
+Triglycerides                : 195 mg/dL
+
+=== COMPLETE BLOOD COUNT ===
+Hemoglobin (Hgb)            : 13.8 g/dL
+WBC Count (TLC)             : 8.2 x10³/µL
+RBC Count                   : 5.1 million/µL
+Platelets (PLT)             : 210 x10³/µL
+
+=== KIDNEY FUNCTION ===
+Creatinine                  : 1.0 mg/dL
+Blood Urea (BUN)            : 16 mg/dL
+
+=== LIVER FUNCTION ===
+SGPT (ALT)                  : 38 U/L
+SGOT (AST)                  : 34 U/L`,
+    gender: 'male'
+  },
+  anemia: {
+    title: '🩸 Anemia Profile — Mrs. Priya Sharma, 34 yrs, Female',
+    text: `PATIENT: Priya Sharma    AGE: 34    GENDER: Female
+DATE: 25-Mar-2026    LAB: LifeCare Labs
+
+=== COMPLETE BLOOD COUNT ===
+Hemoglobin (Hgb)            : 8.4 g/dL
+WBC Count (TLC)             : 3.8 x10³/µL
+RBC Count                   : 3.2 million/µL
+Hematocrit (HCT)            : 30 %
+Platelets (PLT)             : 98 x10³/µL
+
+=== BLOOD SUGAR ===
+Fasting Blood Sugar (FBS)   : 88 mg/dL
+HbA1c                       : 5.1 %
+
+=== LIPID PROFILE ===
+Total Cholesterol            : 172 mg/dL
+LDL Cholesterol              : 88 mg/dL
+HDL Cholesterol              : 52 mg/dL
+Triglycerides                : 110 mg/dL
+
+=== THYROID ===
+TSH                          : 2.8 mIU/L
+
+=== KIDNEY FUNCTION ===
+Creatinine                  : 0.7 mg/dL
+Blood Urea (BUN)            : 12 mg/dL`,
+    gender: 'female'
+  },
+  thyroid: {
+    title: '🦋 Thyroid Disorder — Mrs. Lakshmi Devi, 44 yrs, Female',
+    text: `PATIENT: Lakshmi Devi    AGE: 44    GENDER: Female
+DATE: 25-Mar-2026    LAB: Apollo Diagnostics
+
+=== THYROID FUNCTION TEST ===
+TSH (Thyroid Stimulating)   : 7.6 mIU/L
+T3 (Triiodothyronine)       : 0.6 ng/mL
+T4 (Free Thyroxine)         : 0.7 ng/dL
+
+=== COMPLETE BLOOD COUNT ===
+Hemoglobin (Hgb)            : 11.5 g/dL
+WBC Count (TLC)             : 6.4 x10³/µL
+RBC Count                   : 4.2 million/µL
+Platelets (PLT)             : 240 x10³/µL
+
+=== BLOOD SUGAR ===
+Fasting Blood Sugar (FBS)   : 94 mg/dL
+HbA1c                       : 5.4 %
+
+=== LIPID PROFILE ===
+Total Cholesterol            : 218 mg/dL
+LDL Cholesterol              : 132 mg/dL
+HDL Cholesterol              : 44 mg/dL
+Triglycerides                : 168 mg/dL
+
+=== KIDNEY FUNCTION ===
+Creatinine                  : 0.8 mg/dL
+Blood Urea (BUN)            : 14 mg/dL`,
+    gender: 'female'
+  },
+  kidney: {
+    title: '🫘 Kidney Stress — Mr. Suresh Babu, 58 yrs, Male',
+    text: `PATIENT: Suresh Babu    AGE: 58    GENDER: Male
+DATE: 25-Mar-2026    LAB: Sri Diagnostics
+
+=== KIDNEY FUNCTION TEST ===
+Creatinine                  : 2.1 mg/dL
+Blood Urea (BUN)            : 48 mg/dL
+
+=== LIVER FUNCTION TEST ===
+SGPT (ALT)                  : 72 U/L
+SGOT (AST)                  : 68 U/L
+
+=== COMPLETE BLOOD COUNT ===
+Hemoglobin (Hgb)            : 11.2 g/dL
+WBC Count (TLC)             : 10.8 x10³/µL
+RBC Count                   : 4.0 million/µL
+Platelets (PLT)             : 185 x10³/µL
+
+=== BLOOD SUGAR ===
+Fasting Blood Sugar (FBS)   : 118 mg/dL
+HbA1c                       : 6.4 %
+
+=== LIPID PROFILE ===
+Total Cholesterol            : 196 mg/dL
+LDL Cholesterol              : 112 mg/dL
+HDL Cholesterol              : 38 mg/dL
+Triglycerides                : 180 mg/dL`,
+    gender: 'male'
+  },
+  healthy: {
+    title: '✅ Healthy Profile — Mr. Arjun Rao, 28 yrs, Male',
+    text: `PATIENT: Arjun Rao    AGE: 28    GENDER: Male
+DATE: 25-Mar-2026    LAB: HealthFirst Labs
+
+=== COMPLETE BLOOD COUNT ===
+Hemoglobin (Hgb)            : 15.2 g/dL
+WBC Count (TLC)             : 6.8 x10³/µL
+RBC Count                   : 5.4 million/µL
+Hematocrit (HCT)            : 46 %
+Platelets (PLT)             : 280 x10³/µL
+
+=== BLOOD SUGAR ===
+Fasting Blood Sugar (FBS)   : 86 mg/dL
+Post Meal Glucose (PPBS)    : 118 mg/dL
+HbA1c                       : 5.2 %
+
+=== LIPID PROFILE ===
+Total Cholesterol            : 168 mg/dL
+LDL Cholesterol              : 88 mg/dL
+HDL Cholesterol              : 56 mg/dL
+Triglycerides                : 112 mg/dL
+
+=== THYROID FUNCTION ===
+TSH                          : 2.1 mIU/L
+
+=== KIDNEY FUNCTION ===
+Creatinine                  : 0.9 mg/dL
+Blood Urea (BUN)            : 14 mg/dL
+
+=== LIVER FUNCTION ===
+SGPT (ALT)                  : 22 U/L
+SGOT (AST)                  : 20 U/L`,
+    gender: 'male'
+  }
+};
+
+let activeSample = null;
+
+function selectSample(key) {
+  // Deselect previous
+  if (activeSample) {
+    document.getElementById('sc-' + activeSample)?.classList.remove('selected');
+  }
+  if (activeSample === key) {
+    // Toggle off
+    activeSample = null;
+    document.getElementById('sample-preview-box').classList.remove('show');
+    return;
+  }
+  activeSample = key;
+  document.getElementById('sc-' + key).classList.add('selected');
+  const sample = SAMPLES[key];
+  document.getElementById('sample-preview-title').textContent = sample.title;
+  document.getElementById('sample-preview-text').textContent = sample.text;
+  document.getElementById('sample-preview-box').classList.add('show');
+  document.getElementById('sample-preview-box').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function loadSampleIntoAnalyzer() {
+  if (!activeSample) return;
+  const sample = SAMPLES[activeSample];
+  // Switch to paste tab and fill textarea
+  switchTab('paste');
+  document.getElementById('report-text').value = sample.text;
+  document.getElementById('gender-select').value = sample.gender;
+  // Scroll to analyze button
+  document.getElementById('analyze-btn').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  // Add a subtle flash effect
+  const ta = document.getElementById('report-text');
+  ta.style.borderColor = 'var(--blue-mid)';
+  ta.style.background = 'var(--blue-light)';
+  setTimeout(() => { ta.style.borderColor = ''; ta.style.background = ''; }, 800);
+}
+
+// ── Tab switching ──────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.getElementById('panel-upload').classList.toggle('active', tab === 'upload');
+  document.getElementById('panel-paste').classList.toggle('active', tab === 'paste');
+  document.getElementById('tab-upload').classList.toggle('active', tab === 'upload');
+  document.getElementById('tab-paste').classList.toggle('active', tab === 'paste');
+}
+
+// ── File handling ─────────────────────────────────────────────────────────────
+let selectedFile = null;
+
+function handleFileSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+  selectedFile = file;
+  document.getElementById('file-name').textContent = file.name;
+  document.getElementById('file-size').textContent = formatBytes(file.size);
+  document.getElementById('file-preview').classList.add('show');
+  document.getElementById('upload-zone').style.display = 'none';
+}
+
+function clearFile() {
+  selectedFile = null;
+  document.getElementById('file-input').value = '';
+  document.getElementById('file-preview').classList.remove('show');
+  document.getElementById('upload-zone').style.display = '';
+}
+
+function formatBytes(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/(1024*1024)).toFixed(1) + ' MB';
+}
+
+// Drag-and-drop
+const zone = document.getElementById('upload-zone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+zone.addEventListener('drop', e => {
+  e.preventDefault();
+  zone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) {
+    // Manually trigger handleFileSelect with this file
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    const input = document.getElementById('file-input');
+    input.files = dt.files;
+    handleFileSelect(input);
+  }
+});
+
+// ── Lab reference data (mirrors report_analyzer.py) ───────────────────────────
+const LAB_RANGES = {
+  hemoglobin:       { min:13.5, max:17.5, unit:'g/dL',      label:'Hemoglobin' },
+  wbc:              { min:4.5,  max:11.0,  unit:'×10³/µL',  label:'WBC Count' },
+  rbc:              { min:4.7,  max:6.1,   unit:'million/µL',label:'RBC Count' },
+  platelets:        { min:150,  max:400,   unit:'×10³/µL',  label:'Platelets' },
+  hematocrit:       { min:41,   max:53,    unit:'%',         label:'Hematocrit' },
+  fasting_sugar:    { min:70,   max:100,   unit:'mg/dL',    label:'Fasting Blood Sugar' },
+  hba1c:            { min:4.0,  max:5.6,   unit:'%',        label:'HbA1c' },
+  postmeal_sugar:   { min:70,   max:140,   unit:'mg/dL',    label:'Post-meal Glucose' },
+  total_cholesterol:{ min:0,    max:200,   unit:'mg/dL',    label:'Total Cholesterol' },
+  ldl:              { min:0,    max:100,   unit:'mg/dL',    label:'LDL Cholesterol' },
+  hdl:              { min:40,   max:60,    unit:'mg/dL',    label:'HDL Cholesterol' },
+  triglycerides:    { min:0,    max:150,   unit:'mg/dL',    label:'Triglycerides' },
+  tsh:              { min:0.4,  max:4.0,   unit:'mIU/L',    label:'TSH' },
+  t3:               { min:0.8,  max:2.0,   unit:'ng/mL',    label:'T3' },
+  t4:               { min:0.8,  max:1.8,   unit:'ng/dL',    label:'Free T4' },
+  creatinine:       { min:0.5,  max:1.1,   unit:'mg/dL',    label:'Creatinine' },
+  urea:             { min:7,    max:20,    unit:'mg/dL',    label:'Blood Urea' },
+  sgpt:             { min:7,    max:40,    unit:'U/L',      label:'SGPT (ALT)' },
+  sgot:             { min:10,   max:40,    unit:'U/L',      label:'SGOT (AST)' },
+};
+
+const PLAIN_ENGLISH = {
+  hemoglobin: {
+    low:  'Hemoglobin is LOW — blood is carrying less oxygen. You may feel tired or dizzy. Eat iron-rich foods (spinach, lentils). Doctor may prescribe iron supplements.',
+    high: 'Hemoglobin is HIGH — can thicken the blood. Drink more water and consult your doctor.',
+    normal: 'Hemoglobin is NORMAL. Your blood is carrying oxygen well.'
+  },
+  wbc: {
+    low:  'WBC count is LOW — immunity may be weakened. Avoid crowds and see your doctor.',
+    high: 'WBC count is HIGH — body may be fighting infection or inflammation. See a doctor.',
+    normal: 'WBC count is NORMAL. Immune system is functioning well.'
+  },
+  fasting_sugar: {
+    low:  'Fasting sugar is TOO LOW (hypoglycemia). Eat something sweet immediately and consult a doctor.',
+    high: 'Fasting sugar is HIGH. Above 125 mg/dL indicates diabetes. Reduce sugar, exercise daily, and see a doctor.',
+    normal: 'Fasting blood sugar is NORMAL. Your body is regulating glucose well.'
+  },
+  hba1c: {
+    low:  'HbA1c is within normal range.',
+    high: 'HbA1c is HIGH — average blood sugar over 3 months has been elevated. Needs better diet control and possibly medication.',
+    normal: 'HbA1c is NORMAL. Blood sugar has been well-controlled over the past 3 months.'
+  },
+  total_cholesterol: {
+    low:  'Cholesterol is in normal range.',
+    high: 'Total cholesterol is HIGH. Increases heart disease risk. Reduce saturated fats, fried foods, and red meat.',
+    normal: 'Cholesterol is NORMAL. Keep eating heart-healthy foods.'
+  },
+  ldl: {
+    low:  'LDL is in normal range.',
+    high: 'LDL (bad cholesterol) is HIGH — causes plaque buildup in arteries. Avoid butter, ghee, and processed food.',
+    normal: 'LDL (bad cholesterol) is NORMAL. Good job keeping it in check.'
+  },
+  hdl: {
+    low:  'HDL (good cholesterol) is LOW. Increase exercise, eat olive oil and avocado, and quit smoking.',
+    high: 'HDL is HIGH — this is actually good for heart health.',
+    normal: 'HDL (good cholesterol) is NORMAL. Keep exercising and eating healthy fats.'
+  },
+  tsh: {
+    low:  'TSH is LOW — thyroid may be overactive (hyperthyroidism). Symptoms: weight loss, rapid heartbeat, anxiety. See an endocrinologist.',
+    high: 'TSH is HIGH — thyroid may be underactive (hypothyroidism). Symptoms: fatigue, weight gain, feeling cold.',
+    normal: 'TSH is NORMAL. Your thyroid is functioning well.'
+  },
+  creatinine: {
+    low:  'Creatinine is in normal range.',
+    high: 'Creatinine is HIGH — kidneys may not be filtering waste properly. Drink more water and see a nephrologist.',
+    normal: 'Creatinine is NORMAL. Kidneys are filtering waste efficiently.'
+  },
+  platelets: {
+    low:  'Platelet count is LOW — blood may not clot properly. Avoid injury and see a doctor immediately.',
+    high: 'Platelet count is HIGH — may increase clot risk. Consult your doctor.',
+    normal: 'Platelet count is NORMAL. Blood can clot and heal wounds properly.'
+  }
+};
+
+const KEYWORD_MAP = {
+  hemoglobin:        ['hemoglobin','hgb','hb'],
+  wbc:               ['wbc','white blood cell','leukocyte','tlc'],
+  rbc:               ['rbc','red blood cell','erythrocyte'],
+  platelets:         ['platelet','plt','thrombocyte'],
+  hematocrit:        ['hematocrit','hct','packed cell'],
+  fasting_sugar:     ['fasting blood sugar','fbs','fasting glucose','fasting sugar'],
+  hba1c:             ['hba1c','glycated hemoglobin','a1c'],
+  postmeal_sugar:    ['post meal','postmeal','ppbs','post prandial'],
+  total_cholesterol: ['total cholesterol','cholesterol'],
+  ldl:               ['ldl'],
+  hdl:               ['hdl'],
+  triglycerides:     ['triglyceride','tg'],
+  tsh:               ['tsh','thyroid stimulating'],
+  t3:               [' t3 ','triiodothyronine'],
+  t4:               ['t4','thyroxine','free t4'],
+  creatinine:       ['creatinine','creat'],
+  urea:             ['urea','blood urea','bun'],
+  sgpt:             ['sgpt','alt ','alanine'],
+  sgot:             ['sgot','ast ','aspartate']
+};
+
+// ── Client-side parsing (mirrors Python logic for text input) ─────────────────
+function extractValues(text) {
+  const extracted = {};
+  const lines = text.toLowerCase().split('\n');
+  lines.forEach(line => {
+    for (const [key, keywords] of Object.entries(KEYWORD_MAP)) {
+      if (keywords.some(kw => line.includes(kw))) {
+        const numbers = line.match(/\d+\.?\d*/g);
+        if (numbers) {
+          const val = parseFloat(numbers[0]);
+          if (val > 0 && val < 10000) {
+            extracted[key] = val;
+          }
+        }
+      }
+    }
+  });
+  return extracted;
+}
+
+function classifyValue(key, value, gender) {
+  const ref = LAB_RANGES[key];
+  if (!ref) return 'normal';
+  let min = ref.min, max = ref.max;
+  if (key === 'hemoglobin' && gender === 'female') { min = 12.0; max = 15.5; }
+  if (min === 0) return value > max ? 'high' : 'normal';
+  if (value < min) return 'low';
+  if (value > max) return 'high';
+  return 'normal';
+}
+
+function analyzeText(text, gender) {
+  const extracted = extractValues(text);
+  if (Object.keys(extracted).length === 0) {
+    return { status: 'no_values', message: 'No recognizable lab values found. Make sure the text includes parameter names and numbers.' };
+  }
+  const results = [];
+  let abnormal = 0;
+  for (const [key, value] of Object.entries(extracted)) {
+    const ref = LAB_RANGES[key] || {};
+    const status = classifyValue(key, value, gender);
+    if (status !== 'normal') abnormal++;
+    const expDb = PLAIN_ENGLISH[key] || {};
+    results.push({
+      key, value,
+      label: ref.label || key.replace(/_/g,' '),
+      unit: ref.unit || '',
+      normal_min: ref.min || 0,
+      normal_max: ref.max || 0,
+      status,
+      plain_english: expDb[status] || `Value: ${value} ${ref.unit||''}`
+    });
+  }
+  results.sort((a, b) => (a.status === 'normal') - (b.status === 'normal') || a.label.localeCompare(b.label));
+  return {
+    status: 'success',
+    total_parameters: results.length,
+    abnormal_count: abnormal,
+    normal_count: results.length - abnormal,
+    results,
+    summary: `Found ${results.length} parameters. ${abnormal} are outside normal range.`
+  };
+}
+
+// ── Main analyze function ─────────────────────────────────────────────────────
+let allResults = [];
+let currentFilter = 'all';
+
+async function analyzeReport() {
+  const gender = document.getElementById('gender-select').value;
+  const btn = document.getElementById('analyze-btn');
+  const spinner = document.getElementById('spinner');
+  const label = document.getElementById('btn-label');
+
+  btn.disabled = true;
+  spinner.style.display = 'block';
+  label.textContent = 'Analyzing...';
+
+  try {
+    const activeTab = document.getElementById('tab-upload').classList.contains('active') ? 'upload' : 'paste';
+    let data;
+
+    if (activeTab === 'upload') {
+      if (!selectedFile) {
+        alert('Please select a file first.');
+        return;
+      }
+      // For TXT files, read and parse client-side
+      if (selectedFile.type === 'text/plain' || selectedFile.name.endsWith('.txt')) {
+        const text = await selectedFile.text();
+        data = analyzeText(text, gender);
+      } else {
+        // For PDF/image: try to send to Flask backend
+        const formData = new FormData();
+        formData.append('report', selectedFile);
+        formData.append('gender', gender);
+        try {
+          const res = await fetch('/api/analyze', { method: 'POST', body: formData });
+          if (res.ok) {
+            data = await res.json();
+          } else {
+            throw new Error('Backend not available');
+          }
+        } catch {
+          // Backend not running — extract text from filename hint and show demo
+          data = { status: 'error', message: 'Could not connect to Flask server for PDF/image OCR processing. Please run your Flask app (python app.py) and try again, or use the "Paste Text" tab for a demo.' };
+        }
+      }
+    } else {
+      const text = document.getElementById('report-text').value.trim();
+      if (!text) { alert('Please paste your report text first.'); return; }
+      data = analyzeText(text, gender);
+    }
+
+    renderResults(data);
+  } finally {
+    btn.disabled = false;
+    spinner.style.display = 'none';
+    label.textContent = 'Analyze Report';
+  }
+}
+
+// ── Render ─────────────────────────────────────────────────────────────────────
+function renderResults(data) {
+  const resultsEl = document.getElementById('results');
+  resultsEl.style.display = 'block';
+  resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  if (data.status === 'error' || data.status === 'no_values') {
+    document.getElementById('summary-strip').innerHTML = '';
+    document.getElementById('param-list').innerHTML = `<div class="error-box" style="margin:20px">${data.message}</div>`;
+    document.getElementById('cross-banner-container').innerHTML = '';
+    return;
+  }
+
+  // Summary
+  document.getElementById('summary-strip').innerHTML = `
+    <div class="stat-box"><div class="stat-num">${data.total_parameters}</div><div class="stat-label">Parameters</div></div>
+    <div class="stat-box red"><div class="stat-num">${data.abnormal_count}</div><div class="stat-label">Abnormal</div></div>
+    <div class="stat-box green"><div class="stat-num">${data.normal_count}</div><div class="stat-label">Normal</div></div>
+  `;
+
+  allResults = data.results;
+  renderParamList(allResults, currentFilter);
+
+  // Cross-module banner
+  document.getElementById('cross-banner-container').innerHTML = data.abnormal_count > 0 ? `
+    <div class="cross-banner">
+      <div class="cross-banner-text">⚠️ ${data.abnormal_count} abnormal value(s) detected — check your future disease risk</div>
+      <a href="/risk" class="cross-banner-link">Go to Risk Prediction →</a>
+    </div>
+  ` : '';
+}
+
+function renderParamList(results, filter) {
+  const icons = { normal: '✅', high: '🔴', low: '🟡' };
+  const filtered = filter === 'all' ? results : results.filter(r => filter === 'abnormal' ? r.status !== 'normal' : r.status === 'normal');
+  const list = document.getElementById('param-list');
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div style="text-align:center;padding:32px;color:var(--muted);font-size:14px">No ${filter} parameters found.</div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map((r, i) => {
+    const pct = r.normal_max > 0
+      ? Math.min(Math.max(Math.round(((r.value - r.normal_min * 0.5) / (r.normal_max * 1.5 - r.normal_min * 0.5)) * 100), 4), 96)
+      : 50;
+    const barColor = r.status === 'normal' ? 'var(--green)' : r.status === 'high' ? 'var(--red)' : 'var(--amber)';
+    return `
+      <div class="param-row" id="row-${i}">
+        <div class="param-icon ${r.status}">${icons[r.status]}</div>
+        <div class="param-info">
+          <div class="param-name">${r.label}</div>
+          <div class="param-range">Normal: ${r.normal_min}–${r.normal_max} ${r.unit}</div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:${barColor}"></div></div>
+          <button class="expand-btn" onclick="toggleRow(${i})">▼ Explanation</button>
+          <div class="param-explanation">${r.plain_english}</div>
+        </div>
+        <div class="param-value-col">
+          <div class="param-value ${r.status}">${r.value}</div>
+          <div class="param-unit">${r.unit}</div>
+          <div><span class="status-badge ${r.status}">${r.status}</span></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleRow(i) {
+  const row = document.getElementById('row-' + i);
+  row.classList.toggle('expanded');
+  const btn = row.querySelector('.expand-btn');
+  btn.textContent = row.classList.contains('expanded') ? '▲ Explanation' : '▼ Explanation';
+}
+
+function filterResults(filter, btn) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderParamList(allResults, filter);
+}
+</script>
+</body>
+</html>
